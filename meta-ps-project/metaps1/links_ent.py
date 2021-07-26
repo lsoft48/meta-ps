@@ -39,8 +39,10 @@ class What(Enum):
     Ext         = 7
     #демонстрационная база
     Demo        = 8
+    #демонстрационная база DT
+    DemoDT      = 9
     #файл настроки сортировки для Oracle
-    OrSort      = 9
+    OrSort      = 10
 
 class AWhat(Enum):
     """ Дополнительные вариныт загрузки """
@@ -91,7 +93,7 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \thin.client.deb32.tar.gz
 
         if platform == Platform.Win:
-            if bit==64 and not v.ExistsThin64Win():
+            if bit==64 and not v.ExistsThinFull64Win():
                 raise "No 64-bit windows thin client of this version %s" % v.d_version
             fl="".join(("setuptc", fl_bit, fl_ver, ".rar"))
         elif platform == Platform.LinuxDEB:
@@ -103,16 +105,74 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
                 raise "No 64-bit linux thin client of this version %s" % v.d_version
             fl="".join(("thin.client", fl_ver, "rpm", fl_bit, ".tar.gz"))
         elif platform == Platform.Mac:
-            if not v.ExistsThinMac():
+            if not v.ExistsMac():
                 raise "No mac/os-x thin client of this version %s" % v.d_version
             fl="".join(("thin.osx", fl_ver, ".dmg"))
         else:
             raise "Unknown platform/os (%s)" % platform
     elif what == What.Client:
-        pass
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\client_8_3_12_1469.deb32.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\client_8_3_12_1469.rpm64.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\clientosx_8_3_12_1469.dmg
+        if platform == Platform.LinuxDEB:
+            fl="".join("client",fl_ver,".deb", fl_bit, ".tar.gz")
+        elif platform == Platform.LinuxRPM:
+            fl="".join("client",fl_ver,".rpm", fl_bit, ".tar.gz")
+        elif platform == Platform.Mac:
+            if not v.ExistsMac():
+                raise "No mac/os-x client of this version %s" % v.d_version
+            fl="".join(("clientosx",fl_ver, ".dmg"))
+        elif platform == Platform.Win:
+            raise "No client files for windows - use full platform"
+        else:
+            raise "Unknown platform/os (%s)" % platform
+    elif what == What.Full:
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.13.1690&path=Platform\8_3_13_1690\windows_8_3_13_1690.rar
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.13.1690&path=Platform\8_3_13_1690\windows64full_8_3_13_1690.rar
+        if platform == Platform.Win:
+            fl_full=''
+            if bit==64:
+                if not v.ExistsThinFull64Win():
+                    raise "No 64-bit windows full platform of this version %s" % v.d_version
+                else:
+                    fl_full="full"
+            fl="".join(("windows", fl_bit, fl_full, fl_ver, ".rar"))
+        else:
+            raise "No full platform of this version %s for platform/os %s" % (v.d_version, platform)
+    elif what == What.Server:
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\windows64.rar
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\deb64.tar.gz
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\rpm.tar.gz
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.17.1989&path=Platform\8_3_17_1989\deb_8_3_17_1989.tar.gz
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.17.1989&path=Platform\8_3_17_1989\windows64_8_3_17_1989.rar
+        if platform == Platform.Win:
+            if bit == 32:
+                raise "No server files for windows 32 bit, use full 32 platform"
+            fl="".join(("windows64", fl_ver, ".rar"))
+        elif platform == Platform.LinuxDEB:
+            fl="".join(("deb", fl_bit, fl_ver, ".tar.gz"))
+        elif platform == Platform.LinuxRPM:
+            fl="".join(("rpm", fl_bit, fl_ver, ".tar.gz"))
+        else:
+            raise "No server files for platform %s" % platform
+    elif what == What.Ext:
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.17.1989&path=Platform\8_3_17_1989\addin_8_3_17_1989.zip
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\addin.zip
+        fl="".join(("addin", fl_ver, ".zip"))
+    elif what == What.Demo:
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\demo.zip
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1150&path=Platform\8_3_19_1150\demo.zip
+        fl="demo.zip"
+    elif what == What.DemoDT:
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1150&path=Platform\8_3_19_1150\demodt_8_3_19_1150.zip
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.8.1747&path=Platform\8_3_8_1747\demodt.zip
+        if not v.ExistsDemoDT():
+            raise "No demo dt information base for this version %s" % v.d_version
+        fl="".join(("demodt", fl_ver, ".zip"))
+    elif what == What.OrSort:
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.7.1845&path=Platform\8_3_7_1845\Collations.rar
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\Collations.rar
+        fl="Collations.rar"
     else:
         raise "Unknown what (%s)" % what
     return "".join((__releases_site, '/', path, '?', nick, '&ver=', ver, '&', "path=", dir_1, '\\', dir_2, '\\', fl))

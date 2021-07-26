@@ -21,6 +21,8 @@ class VerInfoEnterprise:
     _num_version_start_64thin_win=0
     #номер версии, начиная с которой появился тонкий клиент для mac
     _num_version_start_thin_mac=0
+    #номер версии, начиная с которой появилась демо база в виде DT
+    _num_version_start_demo_dt=0
 
     def __init__(self, version):
         ver=version.strip()
@@ -61,18 +63,23 @@ class VerInfoEnterprise:
             self._num_version_start_64thin_linux = self.calc_num("8.3.3.658")
         return self.GetNum() >= self._num_version_start_64thin_linux
 
-    def ExistsThin64Win(self):
-        """ проверка, что существуют версии 64-битного тонкого клиента для windows"""
+    def ExistsThinFull64Win(self):
+        """ проверка, что существуют версии 64-битного тонкого клиента и полной платформы для windows"""
         if self._num_version_start_64thin_win == 0:
             self._num_version_start_64thin_win = self.calc_num("8.3.9.1818")
         return self.GetNum() >= self._num_version_start_64thin_win
 
-    def ExistsThinMac(self):
-        """ проверка, что существуют версии тонкого клиента для mac"""
+    def ExistsMac(self):
+        """ проверка, что существуют версии клиента для mac"""
         if self._num_version_start_thin_mac == 0:
             self._num_version_start_thin_mac = self.calc_num("8.3.13.1690")
         if self.d_version in ["8.3.12.1855", "8.3.12.1924"]:
             return True
         return self.GetNum() >= self._num_version_start_thin_mac
 
+    def ExistsDemoDT(self):
+        """ проверка, что существует демо база в виде dt"""
+        if self._num_version_start_demo_dt == 0:
+            self._num_version_start_demo_dt = self.calc_num("8.3.7.1845")
+        return self.GetNum() >= self._num_version_start_demo_dt
 
