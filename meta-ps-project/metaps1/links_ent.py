@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import requests
+import re
 import pprint
 from enum import Enum
 
-from version_1c import VerInfoEnterprise
+from metaps1.version_1c import VerInfoEnterprise
+
+__releases_site="https://releases.1c.ru"
 
 #получение ссылок
 #варианты
@@ -13,8 +17,8 @@ from version_1c import VerInfoEnterprise
 class Platform(Enum):
     """ Варианты платформы/ОС """
     Win      = 1
-    LinuxRpm = 2
-    LinuxDeb = 3
+    LinuxRPM = 2
+    LinuxDEB = 3
     Mac      = 4
 
 class What(Enum):
@@ -48,9 +52,8 @@ class AWhat(Enum):
 # - ссылки на 23.07.2021
 def get_link_enterprise_v1(version, what, bit, platform, add):
     v=VerInfoEnterprise(version)
-    site="https://releases.1c.ru"
     path="version_file"
-    if add=="teach":
+    if add == AWhat.Teach:
         #учебная версия платформы
         nick="nick=PlTr83"
         dir_1="PlTr"
@@ -61,52 +64,87 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
     dir_2=v.u_version
 
     fl_ver=''
-    if v.NeedVersionInFile(self):
+    if v.NeedVersionInFile():
         fl_ver="_"+v.u_version
 
-    fl_bit=''
     if bit==64:
         fl_bit='64'
+    elif platform == Platform.Win or platform == Platform.Mac:
+        fl_bit=''
+    else:
+        fl_bit='32'
 
-    if what="doc":
+    if what == What.Doc:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\1cv8upd_8_3_19_1229.htm
-        fl="1cv8upd"
-        ext="htm"
-        fl_bit=''
-    elif what="err_osdb":
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \1cv8upd.htm
+        fl="1cv8upd".join((fl_ver, ".htm"))
+    elif what == What.ErrOsDB:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\Err_Other.htm
-        fl="Err_Other"
-        ext="htm"
-        #версия в файл не добавляется никогда
-        fl_ver=''
-        fl_bit=''
-    elif what="thin":
+        fl="Err_Other.htm"
+    elif what == What.Thin:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\setuptc_8_3_12_1469.rar
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \setuptc.rar
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\setuptc64_8_3_12_1469.rar
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\thin.client_8_3_12_1469.rpm32.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\thin.client_8_3_12_1469.deb64.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\thin.osx_8_3_19_1229.dmg
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \thin.client.deb32.tar.gz
-        fl="setuptc"
-    elif what="client":
-        
-    else
+
+        if platform == Platform.Win:
+            if bit==64 and not v.ExistsThin64Win():
+                raise "No 64-bit windows thin client of this version %s" % v.d_version
+            fl="".join(("setuptc", fl_bit, fl_ver, ".rar"))
+        elif platform == Platform.LinuxDEB:
+            if bit==64 and not v.ExistsThin64Linux():
+                raise "No 64-bit linux thin client of this version %s" % v.d_version
+            fl="".join(("thin.client", fl_ver, "deb", fl_bit, ".tar.gz"))
+        elif platform == Platform.LinuxRPM:
+            if bit==64 and not v.ExistsThin64Linux():
+                raise "No 64-bit linux thin client of this version %s" % v.d_version
+            fl="".join(("thin.client", fl_ver, "rpm", fl_bit, ".tar.gz"))
+        elif platform == Platform.Mac:
+            if not v.ExistsThinMac():
+                raise "No mac/os-x thin client of this version %s" % v.d_version
+            fl="".join(("thin.osx", fl_ver, ".dmg"))
+        else:
+            raise "Unknown platform/os (%s)" % platform
+    elif what == What.Client:
+        pass
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\client_8_3_12_1469.deb32.tar.gz
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\client_8_3_12_1469.rpm64.tar.gz
+        #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\clientosx_8_3_12_1469.dmg
+    else:
         raise "Unknown what (%s)" % what
-
-    return "".join((site, '/', path, '?', nick, '&', ver, '&', "path=", dir_1, '\\', dir_2, '\\', fl, fl_bit, fl_ver, '.', ext))
-
+    return "".join((__releases_site, '/', path, '?', nick, '&ver=', ver, '&', "path=", dir_1, '\\', dir_2, '\\', fl))
 
 
-
-8.3.12.1469 
-
-https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\deb64_8_3_19_1229.tar.gz
-https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641\deb64.tar.gz
-https://releases.1c.ru/version_file?nick=PlTr83    &ver=8.3.19.1229&path=PlTr\8_3_19_1229\training.deb64.tar.gz
-
-
-
-# - получение ссылки на платформу 1С
 def GetLinkEnterprise(version, what, bit, platform, add=None):
+    """ Получение ссылки на страницу скачивания платформы/ее части """
     return get_link_enterprise_v1(version, what, bit, platform, add)
 
+
+def GetPlatformListPage(sess, version_main):
+    """ Загрузка страницы полного списка платформ указанной версии 83/82... """
+    if version_main==83:
+        v="83"
+    elif version_main==82:
+        v="82"
+    elif version_main==81:
+        v="81"
+    elif version_main==80:
+        v="80"
+    else:
+        raise "Unknown main plaform version, must be 83, 82, 81, 80 (%s)" % version_main
+    res=sess.get(__releases_site+"/project/Platform%s" % v)
+    if not res.ok:
+        raise "Error reciving platforms list (%s)" % res.reason
+    return res.text
+
+def GetLinksEnterpriseAll(sess, version_main):
+    """ Получение версий и ссылок на все имеющиеся платформы """
+    txt=GetPlatformListPage(sess, version_main)
+    lst=re.findall('(?<=<a href=")(/version_files\?nick=Platform8[0-3]&ver=([^"]+))(?=")', txt) 
+    res_list=[]
+    for (link,ver) in lst:
+        res_list.append((__releases_site+link, ver))
+    return res_list
