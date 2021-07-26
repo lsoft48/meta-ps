@@ -20,6 +20,10 @@ class Platform(Enum):
     LinuxRPM = 2
     LinuxDEB = 3
     Mac      = 4
+    Linux    = 5
+
+#список платформ, относящихся к линуксу
+__list_linux=[Platform.Linux, Platform.LinuxDEB, Platform.LinuxRPM]
 
 class What(Enum):
     """ Варианты что именно скачиваем """
@@ -79,7 +83,7 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
     if what == What.Doc:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\1cv8upd_8_3_19_1229.htm
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \1cv8upd.htm
-        fl="1cv8upd".join((fl_ver, ".htm"))
+        fl="".join(("1cv8upd", fl_ver, ".htm"))
     elif what == What.ErrOsDB:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\Err_Other.htm
         fl="Err_Other.htm"
@@ -91,19 +95,26 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\thin.client_8_3_12_1469.deb64.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\thin.osx_8_3_19_1229.dmg
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \thin.client.deb32.tar.gz
-
         if platform == Platform.Win:
             if bit==64 and not v.ExistsThinFull64Win():
                 raise "No 64-bit windows thin client of this version %s" % v.d_version
             fl="".join(("setuptc", fl_bit, fl_ver, ".rar"))
-        elif platform == Platform.LinuxDEB:
-            if bit==64 and not v.ExistsThin64Linux():
-                raise "No 64-bit linux thin client of this version %s" % v.d_version
-            fl="".join(("thin.client", fl_ver, "deb", fl_bit, ".tar.gz"))
-        elif platform == Platform.LinuxRPM:
-            if bit==64 and not v.ExistsThin64Linux():
-                raise "No 64-bit linux thin client of this version %s" % v.d_version
-            fl="".join(("thin.client", fl_ver, "rpm", fl_bit, ".tar.gz"))
+        elif platform in __list_linux:
+            #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\thin.client32_8_3_20_1363.tar.gz
+            #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\thin.client64_8_3_20_1363.tar.gz
+            if v.BinFormat4Linux():
+                fl="".join(("thin.client", fl_bit, fl_ver, ".tar.gz"))
+            else:
+                if platform == Platform.LinuxDEB:
+                    if bit==64 and not v.ExistsThin64Linux():
+                        raise "No 64-bit linux thin client of this version %s" % v.d_version
+                    fl="".join(("thin.client", fl_ver, "deb", fl_bit, ".tar.gz"))
+                elif platform == Platform.LinuxRPM:
+                    if bit==64 and not v.ExistsThin64Linux():
+                        raise "No 64-bit linux thin client of this version %s" % v.d_version
+                    fl="".join(("thin.client", fl_ver, "rpm", fl_bit, ".tar.gz"))
+                else:
+                    raise "No thin client for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version
         elif platform == Platform.Mac:
             if not v.ExistsMac():
                 raise "No mac/os-x thin client of this version %s" % v.d_version
@@ -114,10 +125,16 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\client_8_3_12_1469.deb32.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\client_8_3_12_1469.rpm64.tar.gz
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\clientosx_8_3_12_1469.dmg
-        if platform == Platform.LinuxDEB:
-            fl="".join("client",fl_ver,".deb", fl_bit, ".tar.gz")
-        elif platform == Platform.LinuxRPM:
-            fl="".join("client",fl_ver,".rpm", fl_bit, ".tar.gz")
+        if platform in __list_linux:
+            if v.BinFormat4Linux():
+                raise "No client for any Linux platform for version %s Use full platform instead" % v.d_version
+            else:
+                if platform == Platform.LinuxDEB:
+                    fl="".join("client",fl_ver,".deb", fl_bit, ".tar.gz")
+                elif platform == Platform.LinuxRPM:
+                    fl="".join("client",fl_ver,".rpm", fl_bit, ".tar.gz")
+                else:
+                    raise "No client for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version
         elif platform == Platform.Mac:
             if not v.ExistsMac():
                 raise "No mac/os-x client of this version %s" % v.d_version
@@ -137,8 +154,15 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
                 else:
                     fl_full="full"
             fl="".join(("windows", fl_bit, fl_full, fl_ver, ".rar"))
+        elif platform in __list_linux:
+            if v.BinFormat4Linux():
+                #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\server32_8_3_20_1363.tar.gz
+                #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\server64_8_3_20_1363.tar.gz
+                fl="".join(("server", fl_bit, fl_ver, ".tar.gz"))
+            else:
+                raise "No full platform for any Linux till 8.3.20 Use client+server"
         else:
-            raise "No full platform of this version %s for platform/os %s" % (v.d_version, platform)
+            raise "No full platform for this version %s for platform/os %s" % (v.d_version, platform)
     elif what == What.Server:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\windows64.rar
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\deb64.tar.gz
@@ -149,10 +173,15 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
             if bit == 32:
                 raise "No server files for windows 32 bit, use full 32 platform"
             fl="".join(("windows64", fl_ver, ".rar"))
-        elif platform == Platform.LinuxDEB:
-            fl="".join(("deb", fl_bit, fl_ver, ".tar.gz"))
-        elif platform == Platform.LinuxRPM:
-            fl="".join(("rpm", fl_bit, fl_ver, ".tar.gz"))
+        elif platform in __list_linux:
+            if v.BinFormat4Linux():
+                raise "No server for Linux platform since version 8.3.20 Use full platform"
+            elif platform == Platform.LinuxDEB:
+                fl="".join(("deb", fl_bit, fl_ver, ".tar.gz"))
+            elif platform == Platform.LinuxRPM:
+                fl="".join(("rpm", fl_bit, fl_ver, ".tar.gz"))
+            else:
+                raise "No server for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version
         else:
             raise "No server files for platform %s" % platform
     elif what == What.Ext:

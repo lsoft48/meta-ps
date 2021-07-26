@@ -23,6 +23,8 @@ class VerInfoEnterprise:
     _num_version_start_thin_mac=0
     #номер версии, начиная с которой появилась демо база в виде DT
     _num_version_start_demo_dt=0
+    #номер версии, начиная с которой используется бинарнй формат дистрибутива для linux
+    _num_version_bin_linux_format=0
 
     def __init__(self, version):
         ver=version.strip()
@@ -82,4 +84,11 @@ class VerInfoEnterprise:
         if self._num_version_start_demo_dt == 0:
             self._num_version_start_demo_dt = self.calc_num("8.3.7.1845")
         return self.GetNum() >= self._num_version_start_demo_dt
+
+    def BinFormat4Linux(self):
+        """ проверка, на использование бинарного формата для дистрибутивов под linux,
+        вместо deb и rpm пакетов (с версии 8.3.20) """
+        if self._num_version_bin_linux_format == 0:
+            self._num_version_bin_linux_format = self.calc_num("8.3.20.1363")
+        return self.GetNum() >= self._num_version_bin_linux_format
 
