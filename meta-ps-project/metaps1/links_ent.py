@@ -237,3 +237,14 @@ def GetLinksEnterpriseAll(sess, version_main):
     for (link,ver) in lst:
         res_list.append((__releases_site+link, ver))
     return res_list
+
+def GetDownloadLinks(sess, page_link):
+    """ Получение списка ссылок на загрузки файлов c выбранной страницы"""
+    page=sess.get(page_link)
+    if not page.ok:
+        raise "Can't load page %s" % page_link
+    #https://dl03.1c.ru/public/file/get/49ea130c-35fc-4de8-9e9d-41c343134acc
+    #https://dl04.1c.ru/public/file/get/49ea130c-35fc-4de8-9e9d-41c343134acc
+    lst=re.findall('<a\s+href="(https://[^/]+/public/file/get/[^"]+)"', page.text) 
+    return lst
+
