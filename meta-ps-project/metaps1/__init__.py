@@ -1,2 +1,5 @@
 # -*- coding: utf-8 -*-
-__version__ = '0.1.2'
+import metaps1.info as inf
+
+__version__ = inf.version
+

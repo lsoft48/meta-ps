@@ -10,9 +10,9 @@ setup(
     packages=find_packages(),
     description='1C Enterprise installer',
     long_description=open(join(dirname(__file__), 'README.txt')).read(),
-    install_requires=['requests','re', 'pprint', 'pickle],
+    install_requires=['requests'],
     entry_points={
         'console_scripts':
-            ['meta-ps = metaps1.main:execute_cmd']
+            ['meta-ps = metaps1.main:ExecuteCommand']
         }
 )
