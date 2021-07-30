@@ -57,7 +57,21 @@ class Options():
     def load_file(self, fh):
         """ часть настроек может быть указана в отдельном файле - прочитаем его
         (заполняем только незаполненные)"""
-        pass
+        lines = fh.readlines()
+        for ln in lines:
+            if ln.startswith('#'):
+                #это комментарий
+                continue
+            if len(ln.strip())==0:
+                #пустая строка
+                continue
+            (name,_,data)=ln.partition('=')
+            if name=="USER":
+                self.username=data
+            elif name=="PASS":
+                self.password=data
+            elif name=="CACHE":
+                self.cache=data
 
     def load_params(self, ns):
         """ прочитаем настройки, указанные непосредственно в параметрах """
