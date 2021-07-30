@@ -4,6 +4,8 @@ import pprint
 import argparse
 import metaps1.info as inf
 import metaps1.opt  as options
+import metaps1.links_ent as links
+import metaps1.site_1c as site
 
 __arh=['linux', 'linux_deb', 'linux_rpm', 'win', 'mac']
 __what=['thin', 'full', 'client', 'server', 'ext', 'demo', 'demo_dt', 'or_sort', 'doc', 'err_os_db']
@@ -146,6 +148,22 @@ def ExecuteCommand():
 def ExecuteDownload(opt, nn):
     pprint.pprint(nn)
     pprint.pprint(opt)
-    import metaps1.links_ent as links
 
-    platform_link=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
+    try:
+        platform_link=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
+        #pprint.pprint(platform_link)
+        sess=site.Auth(opt.username, opt.password)
+        down_links=links.GetDownloadLinks(sess, platform_link)
+        if len(down_links)==0:
+            print("На стрнице загрузки отсутствую ссылки для скачивания файла")
+            sys.exit(1)
+        if nn.show:
+            print("Найденные ссылки для скачивания:")
+            for ln in down_links:
+                print("  %s" % ln)
+        #pprint.pprint(down_links)
+        site.DownloadFile(sess, down_links[0], "tmp.bin")
+    except site.Auth1CException as e:
+        print("Ошибка авторизации/доступа на сервер (%s)" % e)
+
+

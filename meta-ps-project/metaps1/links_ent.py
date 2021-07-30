@@ -62,11 +62,11 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
                 if platform == inf.Platform.LinuxDEB:
                     if bit==64 and not v.ExistsThin64Linux():
                         raise Exception("No 64-bit linux thin client of this version %s" % v.d_version)
-                    fl="".join(("thin.client", fl_ver, "deb", fl_bit, ".tar.gz"))
+                    fl="".join(("thin.client", fl_ver, ".deb", fl_bit, ".tar.gz"))
                 elif platform == inf.Platform.LinuxRPM:
                     if bit==64 and not v.ExistsThin64Linux():
                         raise Exception("No 64-bit linux thin client of this version %s" % v.d_version)
-                    fl="".join(("thin.client", fl_ver, "rpm", fl_bit, ".tar.gz"))
+                    fl="".join(("thin.client", fl_ver, ".rpm", fl_bit, ".tar.gz"))
                 else:
                     raise Exception("No thin client for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version)
         elif platform == inf.Platform.Mac:

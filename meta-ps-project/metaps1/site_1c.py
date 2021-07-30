@@ -54,3 +54,21 @@ def save_cookie(sess, name):
         with open(fname, 'wb') as f:
             pickle.dump(sess.cookies, f)
 
+
+def DownloadFile(sess, link, file_to):
+    """ Загрузка файла с портала 1С """
+    for cnt in range(1, 5):
+        try:
+            if cnt > 1:
+                time.sleep(10)  # 10 seconds wait time between downloads
+            with sess.get(link, stream=True) as resp:
+                resp.raise_for_status()
+                with open(file_to, 'wb') as of:
+                    for ch in resp.iter_content(chunk_size=1024*1024):
+                        of.write(ch)
+                #logger.info('Download finished successfully')
+                return file_to
+        except Exception as ex:
+            #logger.error(f'Attempt #{attempt} failed with error: {ex}')
+            raise Exception(f'Attempt #{cnt} failed with error: {ex}')
+    

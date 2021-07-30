@@ -66,12 +66,14 @@ class Options():
                 #пустая строка
                 continue
             (name,_,data)=ln.partition('=')
-            if name=="USER":
-                self.username=data
-            elif name=="PASS":
-                self.password=data
-            elif name=="CACHE":
-                self.cache=data
+            if len(data)>0:
+                data=data.strip()
+                if name=="USER":
+                    self.username=data
+                elif name=="PASS":
+                    self.password=data
+                elif name=="CACHE":
+                    self.cache=data
 
     def load_params(self, ns):
         """ прочитаем настройки, указанные непосредственно в параметрах """
