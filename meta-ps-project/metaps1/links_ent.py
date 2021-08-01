@@ -38,9 +38,11 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\1cv8upd_8_3_19_1229.htm
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \1cv8upd.htm
         fl="".join(("1cv8upd", fl_ver, ".htm"))
+        file_name="1cv8up.htm"
     elif what == inf.What.ErrOsDB:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\Err_Other.htm
         fl="Err_Other.htm"
+        file_name=fl
     elif what == inf.What.Thin:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.12.1469&path=Platform\8_3_12_1469\setuptc_8_3_12_1469.rar
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641  &path=Platform\8_3_3_641  \setuptc.rar
@@ -53,26 +55,31 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
             if bit==64 and not v.ExistsThinFull64Win():
                 raise Exception("No 64-bit windows thin client of this version %s" % v.d_version)
             fl="".join(("setuptc", fl_bit, fl_ver, ".rar"))
+            file_name="".join(("setuptc-", str(bit), ".rar"))
         elif platform in inf.list_linux:
             #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\thin.client32_8_3_20_1363.tar.gz
             #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\thin.client64_8_3_20_1363.tar.gz
             if v.BinFormat4Linux():
                 fl="".join(("thin.client", fl_bit, fl_ver, ".tar.gz"))
+                file_name="".join(("thin.client-", str(bit), ".tar.gz"))
             else:
                 if platform == inf.Platform.LinuxDEB:
                     if bit==64 and not v.ExistsThin64Linux():
                         raise Exception("No 64-bit linux thin client of this version %s" % v.d_version)
                     fl="".join(("thin.client", fl_ver, ".deb", fl_bit, ".tar.gz"))
+                    file_name="".join(("thin.client-", str(bit), ".deb.tar.gz"))
                 elif platform == inf.Platform.LinuxRPM:
                     if bit==64 and not v.ExistsThin64Linux():
                         raise Exception("No 64-bit linux thin client of this version %s" % v.d_version)
                     fl="".join(("thin.client", fl_ver, ".rpm", fl_bit, ".tar.gz"))
+                    file_name="".join(("thin.client-", str(bit), ".rpm.tar.gz"))
                 else:
                     raise Exception("No thin client for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version)
         elif platform == inf.Platform.Mac:
             if not v.ExistsMac():
                 raise Exception("No mac/os-x thin client of this version %s" % v.d_version)
             fl="".join(("thin.osx", fl_ver, ".dmg"))
+            fl="".join(("thin.osx.dmg"))
         else:
             raise Exception("Unknown platform/os (%s)" % platform)
     elif what == inf.What.Client:
@@ -84,15 +91,18 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
                 raise Exception("No client for any Linux platform for version %s Use full platform instead" % v.d_version)
             else:
                 if platform == inf.Platform.LinuxDEB:
-                    fl="".join("client",fl_ver,".deb", fl_bit, ".tar.gz")
+                    fl="".join(("client",fl_ver,".deb", fl_bit, ".tar.gz"))
+                    file_name="".join(("client-", str(bit),".deb.tar.gz"))
                 elif platform == inf.Platform.LinuxRPM:
-                    fl="".join("client",fl_ver,".rpm", fl_bit, ".tar.gz")
+                    fl="".join(("client",fl_ver,".rpm", fl_bit, ".tar.gz"))
+                    file_name="".join(("client-", str(bit),".rpm.tar.gz"))
                 else:
                     raise Exception("No client for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version)
         elif platform == inf.Platform.Mac:
             if not v.ExistsMac():
                 raise Exception("No mac/os-x client of this version %s" % v.d_version)
             fl="".join(("clientosx",fl_ver, ".dmg"))
+            file_name="clientosx.dmg"
         elif platform == inf.Platform.Win:
             raise Exception("No client files for windows - use full platform")
         else:
@@ -108,11 +118,13 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
                 else:
                     fl_full="full"
             fl="".join(("windows", fl_bit, fl_full, fl_ver, ".rar"))
+            file_name="".join(("windows-", str(bit), "-full.rar"))
         elif platform in inf.list_linux:
             if v.BinFormat4Linux():
                 #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\server32_8_3_20_1363.tar.gz
                 #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.20.1363&path=Platform\8_3_20_1363\server64_8_3_20_1363.tar.gz
                 fl="".join(("server", fl_bit, fl_ver, ".tar.gz"))
+                file_name="".join(("server-", str(bit), ".tar.gz"))
             else:
                 raise Exception("No full platform for any Linux till 8.3.20 Use client+server")
         else:
@@ -127,13 +139,16 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
             if bit == 32:
                 raise Exception("No server files for windows 32 bit, use full 32 platform")
             fl="".join(("windows64", fl_ver, ".rar"))
+            file_name="".join(("windows-64-server.rar"))
         elif platform in inf.list_linux:
             if v.BinFormat4Linux():
                 raise Exception("No server for Linux platform since version 8.3.20 Use full platform")
-            elif platform == Platform.LinuxDEB:
+            elif platform == inf.Platform.LinuxDEB:
                 fl="".join(("deb", fl_bit, fl_ver, ".tar.gz"))
-            elif platform == Platform.LinuxRPM:
+                file_name="".join(("server-", str(bit), ".deb.tar.gz"))
+            elif platform == inf.Platform.LinuxRPM:
                 fl="".join(("rpm", fl_bit, fl_ver, ".tar.gz"))
+                file_name="".join(("server-", str(bit), ".rpm.tar.gz"))
             else:
                 raise Exception("No server for common Linux platform for version %s Use LinuxDEB or LinuxRPM" % v.d_version)
         else:
@@ -142,27 +157,31 @@ def get_link_enterprise_v1(version, what, bit, platform, add):
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.17.1989&path=Platform\8_3_17_1989\addin_8_3_17_1989.zip
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\addin.zip
         fl="".join(("addin", fl_ver, ".zip"))
+        file_name="addin.zip"
     elif what == inf.What.Demo:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.3.641&path=Platform\8_3_3_641\demo.zip
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1150&path=Platform\8_3_19_1150\demo.zip
         fl="demo.zip"
+        file_name=fl
     elif what == inf.What.DemoDT:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1150&path=Platform\8_3_19_1150\demodt_8_3_19_1150.zip
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.8.1747&path=Platform\8_3_8_1747\demodt.zip
         if not v.ExistsDemoDT():
             raise Exception("No demo dt information base for this version %s" % v.d_version)
         fl="".join(("demodt", fl_ver, ".zip"))
+        file_name="demodt.zip"
     elif what == inf.What.OrSort:
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.7.1845&path=Platform\8_3_7_1845\Collations.rar
         #https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.19.1229&path=Platform\8_3_19_1229\Collations.rar
         fl="Collations.rar"
+        file_name=fl
     else:
         raise Exception("Unknown what (%s)" % what)
-    return "".join((inf.releases_site, '/', path, '?', nick, '&ver=', ver, '&', "path=", dir_1, '\\', dir_2, '\\', fl))
+    return ("".join((inf.releases_site, '/', path, '?', nick, '&ver=', ver, '&', "path=", dir_1, '\\', dir_2, '\\', fl)), file_name)
 
 
 def GetLinkEnterprise(version, what, bit, platform, add=None):
-    """ Получение ссылки на страницу скачивания платформы/ее части """
+    """ Получение ссылки на страницу скачивания платформы/ее части + имени скачиваемого файла"""
     return get_link_enterprise_v1(version, what, bit, platform, add)
 
 
