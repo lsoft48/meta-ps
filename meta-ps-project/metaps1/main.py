@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 import pprint
 import argparse
 import metaps1.info as inf
@@ -150,19 +151,19 @@ def ExecuteDownload(opt, nn):
     pprint.pprint(opt)
 
     try:
-        platform_link=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
+        (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
         #pprint.pprint(platform_link)
         sess=site.Auth(opt.username, opt.password)
         down_links=links.GetDownloadLinks(sess, platform_link)
         if len(down_links)==0:
-            print("На стрнице загрузки отсутствую ссылки для скачивания файла")
+            print("На странице загрузки отсутствую ссылки для скачивания файла")
             sys.exit(1)
         if nn.show:
             print("Найденные ссылки для скачивания:")
             for ln in down_links:
                 print("  %s" % ln)
         #pprint.pprint(down_links)
-        site.DownloadFile(sess, down_links[0], "tmp.bin")
+        site.DownloadFile(sess, down_links[0], file_name)
     except site.Auth1CException as e:
         print("Ошибка авторизации/доступа на сервер (%s)" % e)
 
