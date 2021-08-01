@@ -66,6 +66,8 @@ def DownloadFile(sess, link, file_to):
                 with open(file_to, 'wb') as of:
                     for ch in resp.iter_content(chunk_size=1024*1024):
                         of.write(ch)
+                        print(".", end="", flush=True)
+                    print("\nFinished")
                 #logger.info('Download finished successfully')
                 return file_to
         except Exception as ex:
