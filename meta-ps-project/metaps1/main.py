@@ -7,6 +7,7 @@ import metaps1.info as inf
 import metaps1.opt  as options
 import metaps1.links_ent as links
 import metaps1.site_1c as site
+from metaps1.cache import LCache
 
 __arh=['linux', 'linux_deb', 'linux_rpm', 'win', 'mac']
 __what=['thin', 'full', 'client', 'server', 'ext', 'demo', 'demo_dt', 'or_sort', 'doc', 'err_os_db']
@@ -71,8 +72,9 @@ def create_parser():
     inst_group.add_argument('-b', '--bit',     help='Разрядность устанавливаемых файлов 32/64', type=int, choices=[32, 64], metavar='BIT')
     inst_group.add_argument('-a', '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
     inst_group.add_argument('-w', '--what',    help='Что именно скачиваем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
-    inst_group.add_argument('-n', '--no-load', help='Не обращаться к порталу 1С, установка только с диска', action='store_true')
+    inst_group.add_argument('-n', '--no-load', help='Не обращаться к порталу 1С, установка только с диска', action='store_true', dest="no_load")
     inst_group.add_argument('-i', '--in',      help='Установка из указанной папки/файла', metavar='in-file or in-path')
+    inst_group.add_argument('-d', '--no-del',  help='Не удалять распакованные файлы из временной папки', action='store_true', dest="no_del_tmp")
 
     list_parser   = cmd_parsers.add_parser('list', 
                                            add_help = False,
@@ -135,10 +137,10 @@ def ExecuteCommand():
     if namespace.command == 'list':
         print("LIST")
     elif namespace.command == 'download':
-        print("DOWNLOAD")
+        #print("DOWNLOAD")
         ExecuteDownload(opt, namespace)
     elif namespace.command == 'install':
-        print("INSTALL")
+        ExecuteInstall(opt, namespace)
     elif namespace.command == 'remove':
         print("REMOVE")
     elif namespace.command == 'clear':
@@ -147,24 +149,43 @@ def ExecuteCommand():
          parser.print_help()
 
 def ExecuteDownload(opt, nn):
-    pprint.pprint(nn)
-    pprint.pprint(opt)
+    #pprint.pprint(nn)
+    #pprint.pprint(opt)
 
     try:
         (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
+        if nn.show:
+            print("Найденные ссылка на платформу:")
+            print("  %s" % platform_link)
         #pprint.pprint(platform_link)
         sess=site.Auth(opt.username, opt.password)
         down_links=links.GetDownloadLinks(sess, platform_link)
         if len(down_links)==0:
-            print("На странице загрузки отсутствую ссылки для скачивания файла")
+            print("На странице загрузки отсутствуют ссылки для скачивания файла")
             sys.exit(1)
         if nn.show:
             print("Найденные ссылки для скачивания:")
             for ln in down_links:
                 print("  %s" % ln)
         #pprint.pprint(down_links)
-        site.DownloadFile(sess, down_links[0], file_name)
+        cc=LCache(opt)
+        tmp_file=cc.StartDownload(opt.need_version, file_name)
+        site.DownloadFile(sess, down_links[0], tmp_file)
+        cc.FinishDownload(tmp_file)
     except site.Auth1CException as e:
         print("Ошибка авторизации/доступа на сервер (%s)" % e)
 
 
+def ExecuteInstall(opt, nn):
+    try:
+        cc=LCache(opt)
+        (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
+        if cc.NeedDownload(opt.need_version, file_name):
+            ExecuteDownload(opt, nn)
+        if cc.NeedDownload(opt.need_version, file_name):
+            raise Exception("Не удалось выполнить загрузку %s" % platform_link)
+        #выполняем инсталляцию
+        import metaps1.install as inst
+        inst.DoInstall(cc, opt, nn, file_name)
+    except:
+        pass

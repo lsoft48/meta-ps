@@ -75,6 +75,8 @@ class What(Enum):
         else:
             raise Exception("Неизвестный пакет из состава платформы %s" % what)
 
+list_4install=[What.Thin, What.Full, What.Client, What.Server]
+
 class AWhat(Enum):
     """ Дополнительные варинты загрузки """
     #обычная платформа
