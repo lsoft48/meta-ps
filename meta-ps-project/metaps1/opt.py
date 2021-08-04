@@ -15,6 +15,7 @@ class Options():
 
         #кэш
         self.cache    = None
+        self.no_del_tmp = False
 
         #параметры "требуемой" платформы
         self.need_version = None
@@ -83,6 +84,9 @@ class Options():
             self.password=ns.PASS
         if ns.cache != None:
             self.cache=ns.cache
+
+        if ns.command=='install':
+            self.no_del_tmp = ns.no_del_tmp
         #если команда требует параметров платформы 1С
         if ns.command in ['download', 'install']:
             # - версия
