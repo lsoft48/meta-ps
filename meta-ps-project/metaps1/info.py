@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 
-version='0.2.0'
+version='0.5.0'
 
 releases_site="https://releases.1c.ru"
 
@@ -14,6 +14,7 @@ class Platform(Enum):
     Linux    = 5
     @staticmethod
     def GetFromUser(arh):
+        arh=arh.lower()
         if arh=="win":
             return Platform.Win
         elif arh=="linux_rpm":
@@ -22,7 +23,7 @@ class Platform(Enum):
             return Platform.LinuxDEB
         elif arh=="mac":
             return Platform.Mac
-        elif arh=="Linux":
+        elif arh=="linux":
             return Platform.Linux
         else:
             raise Exception("Указана неизвестная архитектура платформы %s" % arh)
