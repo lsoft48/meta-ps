@@ -5,10 +5,16 @@ import pprint
 import argparse
 import metaps1.info as inf
 
+import logging
+logger = logging.getLogger(__name__)
+
 class Options():
     def __init__(self):
         """ Начальная инициализация всех опций и получений свойств машины
         на которой запущена утилита """
+        #уровень лога
+        self.log_level = None
+
         #параметры подключения к серверу
         self.username = None
         self.password = None
@@ -23,6 +29,9 @@ class Options():
         self.need_arh     = None
         self.need_what    = None
         self.need_add     = None
+
+        #не скачивать - просто показать ссылки
+        self.no_load_show = False
 
         #текущая ОС
         self.__is_lin=False
@@ -58,6 +67,7 @@ class Options():
     def load_file(self, fh):
         """ часть настроек может быть указана в отдельном файле - прочитаем его
         (заполняем только незаполненные)"""
+        logger.info("loading option file")
         lines = fh.readlines()
         for ln in lines:
             if ln.startswith('#'):
@@ -67,17 +77,25 @@ class Options():
                 #пустая строка
                 continue
             (name,_,data)=ln.partition('=')
+            name=name.upper()
             if len(data)>0:
                 data=data.strip()
                 if name=="USER":
                     self.username=data
                 elif name=="PASS":
                     self.password=data
+                    data="********"
                 elif name=="CACHE":
                     self.cache=data
+                elif name=="LOGLEVEL":
+                    self.log_level=data.upper()
+                    from metaps1 import SetLogLevel
+                    SetLogLevel(self._log_level)
+                logger.debug("%s=%s" % (name, data))
 
     def load_params(self, ns):
         """ прочитаем настройки, указанные непосредственно в параметрах """
+        logger.info("loading command line params")
         if ns.user != None:
             self.username=ns.user
         if ns.PASS != None:
@@ -87,6 +105,9 @@ class Options():
 
         if ns.command=='install':
             self.no_del_tmp = ns.no_del_tmp
+        if ns.command=='download':
+            self.no_load_show = ns.show
+
         #если команда требует параметров платформы 1С
         if ns.command in ['download', 'install']:
             # - версия
@@ -129,9 +150,11 @@ class Options():
     def load_env(self):
         """ прочитаем настройки, указанные в переменных окружения
         (заполняем только незаполненные)"""
+        logger.info("loading env var params")
         pass
     def fill_defaults(self):
         """ Заполнение значениями по умолчанию незаполненных параметров """
+        logger.info("filling params default values")
         if self.cache==None:
             if self.__is_lin:
                 self.cache="%s/meta-1c" % self.__home
