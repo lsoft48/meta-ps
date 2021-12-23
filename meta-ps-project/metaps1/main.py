@@ -7,7 +7,11 @@ import metaps1.info as inf
 import metaps1.opt  as options
 import metaps1.links_ent as links
 import metaps1.site_1c as site
+import metaps1.install as inst
 from metaps1.cache import LCache
+
+import logging
+logger = logging.getLogger(__name__)
 
 __arh=['linux', 'linux_deb', 'linux_rpm', 'win', 'mac']
 __what=['thin', 'full', 'client', 'server', 'ext', 'demo', 'demo_dt', 'or_sort', 'doc', 'err_os_db']
@@ -71,7 +75,7 @@ def create_parser():
     inst_group.add_argument('-v', '--version', help='Версия платформы для установки (пример: 8.3.16.1148)')
     inst_group.add_argument('-b', '--bit',     help='Разрядность устанавливаемых файлов 32/64', type=int, choices=[32, 64], metavar='BIT')
     inst_group.add_argument('-a', '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
-    inst_group.add_argument('-w', '--what',    help='Что именно скачиваем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
+    inst_group.add_argument('-w', '--what',    help='Что именно устанавливаем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
     inst_group.add_argument('-n', '--no-load', help='Не обращаться к порталу 1С, установка только с диска', action='store_true', dest="no_load")
     inst_group.add_argument('-i', '--in',      help='Установка из указанной папки/файла', metavar='in-file or in-path')
     inst_group.add_argument('-d', '--no-del',  help='Не удалять распакованные файлы из временной папки', action='store_true', dest="no_del_tmp")
@@ -111,6 +115,7 @@ def create_parser():
     pg = parser.add_argument_group(title='Параметры')
     pg.add_argument('-h', '--help',    help = 'Справка', action='help')
     pg.add_argument('-c', '--cache',   help = 'Путь к папке для хранения загруженных файлов (кэш загрузки)', metavar='путь')
+    pg.add_argument('-l', '--log',     help = 'Уровень детализации журнала)', dest='LogLevel',metavar='уровень', choices=['debug','info','warning','error','critical'],default='def')
     pg.add_argument('-u', '--user',    help = 'Имя пользователя на портале 1С')
     pg.add_argument('-p', '--pass',    help = 'Пароль пользователя на портале 1С', dest='PASS')
     pg.add_argument('-o', '--options', help = 'Файл с настройками имени/пароля/путей', metavar="opt-file", type=argparse.FileType())
@@ -123,15 +128,26 @@ def create_parser():
 def ExecuteCommand():
     parser = create_parser()
     namespace = parser.parse_args()
+    from metaps1 import SetLogLevel
+    SetLogLevel('ERROR')
+    if namespace.LogLevel!='def':
+        SetLogLevel(namespace.LogLevel.upper())
+    logger.info("ExecuteCommand() started")
     #print (namespace)
 
     #общие настройки
     opt=options.Options()
-    opt.load_params(namespace)
-    if namespace.options != None:
-        opt.load_file(namespace.options)
-    opt.load_env()
-    opt.fill_defaults()
+    try:
+        opt.load_params(namespace)
+        if namespace.options != None:
+            opt.load_file(namespace.options)
+        opt.load_env()
+        opt.fill_defaults()
+    except Exception as e:
+        logger.info("Options error while executiong command")
+        logger.exception(e)
+        print("Ошибка при получени настроек: %s" % e)
+        sys.exit(1)
 
     #выполняем команду
     if namespace.command == 'list':
@@ -147,36 +163,47 @@ def ExecuteCommand():
         print("CLEAR")
     else:
          parser.print_help()
+    logger.info("ExecuteCommand() finished")
 
 def ExecuteDownload(opt, nn):
-    #pprint.pprint(nn)
-    #pprint.pprint(opt)
-
+    """ Команда скачивания файлов платформы """
+    logger.info("executing download command")
     try:
         (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
-        if nn.show:
+        logger.debug("platform link = %s" % platform_link)
+        logger.debug("downloading element file name = %s" % file_name)
+        if opt.no_load_show:
             print("Найденные ссылка на платформу:")
             print("  %s" % platform_link)
-        #pprint.pprint(platform_link)
         sess=site.Auth(opt.username, opt.password)
         down_links=links.GetDownloadLinks(sess, platform_link)
         if len(down_links)==0:
             print("На странице загрузки отсутствуют ссылки для скачивания файла")
             sys.exit(1)
-        if nn.show:
+        if opt.no_load_show:
             print("Найденные ссылки для скачивания:")
             for ln in down_links:
                 print("  %s" % ln)
-        #pprint.pprint(down_links)
-        cc=LCache(opt)
-        tmp_file=cc.StartDownload(opt.need_version, file_name)
-        site.DownloadFile(sess, down_links[0], tmp_file)
-        cc.FinishDownload(tmp_file)
+        else:
+            print("Выполняем загрузку с портала 1С")
+            cc=LCache(opt)
+            tmp_file=cc.StartDownload(opt.need_version, file_name)
+            site.DownloadFile(sess, down_links[0], tmp_file)
+            cc.FinishDownload(tmp_file)
     except site.Auth1CException as e:
         print("Ошибка авторизации/доступа на сервер (%s)" % e)
+        logger.exception("Auth error: %s" % e)
+    except links.LinksException as e:
+        print("Ошибка указанаия версий, платформ или архитектур для загрузки: %s" % e)
+        logger.exception("Links error")
+    except:
+        logger.exception("Unexpected error in download command")
+        raise
 
 
 def ExecuteInstall(opt, nn):
+    """ команда установки платформы """
+    logger.info("executing install command")
     try:
         cc=LCache(opt)
         (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
@@ -185,7 +212,13 @@ def ExecuteInstall(opt, nn):
         if cc.NeedDownload(opt.need_version, file_name):
             raise Exception("Не удалось выполнить загрузку %s" % platform_link)
         #выполняем инсталляцию
-        import metaps1.install as inst
         inst.DoInstall(cc, opt, nn, file_name)
+    except inst.InstallException as e:
+        print("Ошибка при выполнении установки: %s" % e)
+        logger.exception("Install error")
+    except links.LinksException as e:
+        print("Ошибка указанаия версий, платформ или архитектур для установки: %s" % e)
+        logger.exception("Links error")
     except:
-        pass
+        logger.exception("Unexpected error in install command")
+        raise
