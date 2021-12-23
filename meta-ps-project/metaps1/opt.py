@@ -90,7 +90,7 @@ class Options():
                 elif name=="LOGLEVEL":
                     self.log_level=data.upper()
                     from metaps1 import SetLogLevel
-                    SetLogLevel(self._log_level)
+                    SetLogLevel(self.log_level)
                 logger.debug("%s=%s" % (name, data))
 
     def load_params(self, ns):
@@ -102,6 +102,8 @@ class Options():
             self.password=ns.PASS
         if ns.cache != None:
             self.cache=ns.cache
+        if ns.LogLevel != 'def':
+            self.log_level=str(ns.LogLevel).upper()
 
         if ns.command=='install':
             self.no_del_tmp = ns.no_del_tmp
@@ -160,4 +162,7 @@ class Options():
                 self.cache="%s/meta-1c" % self.__home
             elif self.__is_win:
                 self.cache="%s/meta-1c" % self.__home
+        if self.log_level==None:
+            self.log_level="ERROR"
+
 
