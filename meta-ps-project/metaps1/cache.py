@@ -41,6 +41,7 @@ class LCache:
         logger.debug("version=%s" % version)
         logger.debug("file_name=%s" % file_name)
         path=self.GetPlatformFilePath(version)
+        logger.debug("path=%s" % path)
         tt=tempfile.NamedTemporaryFile(suffix=".part",delete=False)
         logger.debug("temp file_name=%s" % tt.name)
         self.__downloads[tt.name]=(path / file_name, tt)
@@ -60,30 +61,37 @@ class LCache:
     def FinishDownload(self, tmp_file):
         """ Вызывается при завершении загрузки, с указанием ранее выделенного временного файла. Файл
         перемещается на свое результирующее положение, временные файлы удаляются (если остались).
-        Если целевой файл уже был - перед перемещением он перименуется и потом тоже удаляется"""
+        Если целевой файл уже был - перед перемещением он переименуется и потом тоже удаляется"""
         logger.info("FinishDownload()")
         logger.debug("tmp_file=%s" % tmp_file)
         (to, tt)=self.__downloads[tmp_file]
         try:
             delete_old=False
             if Path(to).is_file():
+                logger.debug("file already exists %s" % to)
                 to_old=str(to)+".old"
                 for i in range(0, 1000):
                     to_old_temp=to_old+str(i).strip()
                     if not Path(to_old_temp).exists():
                         delete_old=True
                         to_old=to_old_temp
+                        logger.debug("old file name selected %s" % to_old)
                         break
                 if delete_old:
                     shutil.move(to, to_old)
+                    logger.debug("moved file (%s) to (%s)" % (to,to_old))
                 else:
                     raise Exception("Can't select old file name for %s" % to)
             shutil.move(tt.name, str(to))
+            logger.debug("moved file (%s) to (%s)" % (tt.name, to))
             if delete_old:
+                logger.debug("delete_old=True - removing file (%s)" % to_old)
                 os.remove(to_old)
         finally:
             if Path(tt.name).is_file():
                 os.remove(tt.name)
+                logger.debug("file (%s) still exists (exception?) - removing it" % tt.name)
+            logger.info("FinishDownload  - end")
 
     def StartInstall(self, version, file_name):
         """ Вызывается при начале установки - выполняет распаковку платформы во временную папку """
