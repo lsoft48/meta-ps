@@ -30,6 +30,10 @@ def auth_v1(user, password, debug):
     if not match:
         raise Auth1CException("Site parse error: no execution")
     ex=match.group(0)
+    if user==None or user=="":
+        raise Auth1CException("No user selected for 1C portal")
+    if password==None or password=="":
+        raise Auth1CException("No password for user %s at 1C portal" % user)
     data={'inviteCode':'', 'execution':ex, '_eventId':'submit', 'username':user, 'password':password}
     r_post = sess.post('https://login.1c.ru'+action, data=data)
     if debug:
