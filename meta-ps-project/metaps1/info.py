@@ -2,7 +2,7 @@
 import sys
 from enum import Enum
 
-version='0.5.0'
+version='0.6.0'
 
 platform=sys.platform
 platform_linux=platform.startswith('linux')
