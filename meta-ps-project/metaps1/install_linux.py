@@ -4,7 +4,7 @@ import pprint
 from pathlib import Path
 from locale import getpreferredencoding 
 import metaps1.info as inf
-from metaps1.install import InstallerBase, InstallException
+from metaps1.install import InstallerBase
 
 import logging
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class InstallerLinuxDeb(InstallerBase):
                         dep_list=self._find_dep_list(pack, e.stderr.decode(self.def_enc, "replace"))
                         deps[str(pack.name)]=dep_list
                         pprint.pprint(dep_list)
-                        raise InstallException("Need install dependances by hand")
+                        raise self.InstallException("Need install dependances by hand")
                     self._log_sh_res(e)
         return deps
 
@@ -127,6 +127,6 @@ class InstallerLinuxDeb(InstallerBase):
             if not pack.installed:
                 res.append(str(pack.name))
         if len(res)>0:
-            raise InstallException("Error installing packages: %s" % ", ".join(res))
+            raise self.InstallException("Error installing packages: %s" % ", ".join(res))
 
 

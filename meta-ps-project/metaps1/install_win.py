@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 #from locale import getpreferredencoding 
 import metaps1.info as inf
-from metaps1.install import InstallerBase, InstallException
+from metaps1.install import InstallerBase
 
 import logging
 logger = logging.getLogger(__name__)

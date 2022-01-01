@@ -15,62 +15,66 @@ logger = logging.getLogger(__name__)
 #  #windows
 #  pass
 
-class InstallException(Exception):
-    pass
 
 def std_conv(txt):
     return 
 
-def DoInstall(cc, opt, nn, file_name):
-    """ Установка элемента платформы """
-    logger.info("DoInstall()")
-    logger.debug("file_name=%s" % file_name)
-    if not opt.need_what in inf.list_4install:
-        raise InstallException("Элемент платформы %s не требует установки" % opt.need_what)
-    #в зависимости от целевой архитектуры создадим инсталлятор
-    if opt.need_arh==inf.Platform.LinuxDEB:
-        from metaps1.install_linux import InstallerLinuxDeb
-        installer=InstallerLinuxDeb(opt, file_name)
-    elif opt.need_arh==inf.Platform.Win:
-        from metaps1.install_win import InstallerWindows
-        installer=InstallerWindows(opt, file_name)
-    else:
-        raise InstallException("Установка для платформы %s не реализована" % opt.need_arh)
-    try:
-        #получим временную папку и распакуем в нее архив
-        #выполним установку
-        installer(cc)
-    finally:
-        #удалим распакованные данные платформы
-        pass
-
-def DoRemove(cc, opt, nn, file_name):
-    """ Удаление платформы """
-    logger.info("DoRemove()")
-    logger.debug("file_name=%s" % file_name)
-    if not opt.need_what in inf.list_4install:
-        raise InstallException("Элемент платформы %s не требует удаления" % opt.need_what)
-    #в зависимости от целевой архитектуры создадим инсталлятор
-    if opt.need_arh==inf.Platform.LinuxDEB:
-        from metaps1.install_linux import InstallerLinuxDeb
-        installer=InstallerLinuxDeb(opt, file_name)
-    elif opt.need_arh==inf.Platform.Win:
-        from metaps1.install_win import InstallerWindows
-        installer=InstallerWindows(opt, file_name)
-    else:
-        raise InstallException("Удаление для платформы %s не реализована" % opt.need_arh)
-    try:
-        #получим временную папку и распакуем в нее архив
-        #выполним установку
-        installer.Remove(cc)
-    finally:
-        #удалим распакованные данные платформы
-        pass
 
 class InstallerBase():
     """ Базовый класс инсталлятора - от него создаются установщики
     для linux deb/rpm и для windows native/wine
     """
+    class InstallException(Exception):
+        pass
+
+    @staticmethod
+    def DoInstall(cc, opt, nn, file_name):
+        """ Установка элемента платформы """
+        logger.info("DoInstall()")
+        logger.debug("file_name=%s" % file_name)
+        if not opt.need_what in inf.list_4install:
+            raise self.InstallException("Элемент платформы %s не требует установки" % opt.need_what)
+        #в зависимости от целевой архитектуры создадим инсталлятор
+        if opt.need_arh==inf.Platform.LinuxDEB:
+            from metaps1.install_linux import InstallerLinuxDeb
+            installer=InstallerLinuxDeb(opt, file_name)
+        elif opt.need_arh==inf.Platform.Win:
+            from metaps1.install_win import InstallerWindows
+            installer=InstallerWindows(opt, file_name)
+        else:
+            raise self.InstallException("Установка для платформы %s не реализована" % opt.need_arh)
+        try:
+            #получим временную папку и распакуем в нее архив
+            #выполним установку
+            installer(cc)
+        finally:
+            #удалим распакованные данные платформы
+            pass
+
+    @staticmethod
+    def DoRemove(cc, opt, nn, file_name):
+        """ Удаление платформы """
+        logger.info("DoRemove()")
+        logger.debug("file_name=%s" % file_name)
+        if not opt.need_what in inf.list_4install:
+            raise self.InstallException("Элемент платформы %s не требует удаления" % opt.need_what)
+        #в зависимости от целевой архитектуры создадим инсталлятор
+        if opt.need_arh==inf.Platform.LinuxDEB:
+            from metaps1.install_linux import InstallerLinuxDeb
+            installer=InstallerLinuxDeb(opt, file_name)
+        elif opt.need_arh==inf.Platform.Win:
+            from metaps1.install_win import InstallerWindows
+            installer=InstallerWindows(opt, file_name)
+        else:
+            raise self.InstallException("Удаление для платформы %s не реализована" % opt.need_arh)
+        try:
+            #получим временную папку и распакуем в нее архив
+            #выполним установку
+            installer.Remove(cc)
+        finally:
+            #удалим распакованные данные платформы
+            pass
+
     def __init__(self, opt, file_name):
         logger.info("InstallerBase::__init__()")
         self._opt=opt

@@ -7,7 +7,7 @@ import metaps1.info as inf
 import metaps1.opt  as options
 import metaps1.links_ent as links
 import metaps1.site_1c as site
-import metaps1.install as inst
+from metaps1.install import InstallerBase
 from metaps1.cache import LCache
 
 import logging
@@ -217,8 +217,8 @@ def ExecuteInstall(opt, nn):
             #файла по прежнему нет в кэше - загрузка не удалась
             raise Exception("Не удалось выполнить загрузку %s" % platform_link)
         #выполняем инсталляцию
-        inst.DoInstall(cc, opt, nn, file_name)
-    except inst.InstallException as e:
+        InstallerBase.DoInstall(cc, opt, nn, file_name)
+    except InstallerBase.InstallException as e:
         print("Ошибка при выполнении установки: %s" % e)
         logger.exception("Install error")
     except links.LinksException as e:
@@ -241,8 +241,8 @@ def ExecuteRemove(opt, nn):
             #файла по прежнему нет в кэше - загрузка не удалась
             raise Exception("Не удалось выполнить загрузку %s" % platform_link)
         #выполняем инсталляцию
-        inst.DoRemove(cc, opt, nn, file_name)
-    except inst.InstallException as e:
+        InstallerBase.DoRemove(cc, opt, nn, file_name)
+    except InstallerBase.InstallException as e:
         print("Ошибка при выполнении удаления платформы: %s" % e)
         logger.exception("Remove error")
     except links.LinksException as e:
