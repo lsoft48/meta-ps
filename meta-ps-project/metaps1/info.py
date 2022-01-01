@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import sys
 from enum import Enum
 
 version='0.5.0'
+
+platform=sys.platform
+platform_linux=platform.startswith('linux')
 
 releases_site="https://releases.1c.ru"
 
@@ -76,7 +80,13 @@ class What(Enum):
         else:
             raise Exception("Неизвестный пакет из состава платформы %s" % what)
 
-list_4install=[What.Thin, What.Full, What.Client, What.Server]
+""" 
+	Части платформы, которые требуют установки 
+"""
+list_4install=[What.Thin, 
+               What.Full, 
+               What.Client, 
+               What.Server]
 
 class AWhat(Enum):
     """ Дополнительные варинты загрузки """
