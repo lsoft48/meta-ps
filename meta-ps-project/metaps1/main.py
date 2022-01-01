@@ -79,6 +79,7 @@ def create_parser():
     inst_group.add_argument('-n', '--no-load', help='Не обращаться к порталу 1С, установка только с диска', action='store_true', dest="no_load")
     inst_group.add_argument('-i', '--in',      help='Установка из указанной папки/файла', metavar='in-file or in-path')
     inst_group.add_argument('-d', '--no-del',  help='Не удалять распакованные файлы из временной папки', action='store_true', dest="no_del_tmp")
+    inst_group.add_argument('--inst-ui', help='Интерфейс инсталлятора', type=str, choices=['no', 'progress', 'full'], metavar='INST_UI')
 
     list_parser   = cmd_parsers.add_parser('list', 
                                            add_help = False,
@@ -109,8 +110,10 @@ def create_parser():
     )
     remove_group = remove_parser.add_argument_group(title='Параметры')
     remove_group.add_argument('-h', '--help', action='help', help='Справка')
-    remove_group.add_argument('-v', '--version', help='Версия платформы для установки (пример: 8.3.16.1148)')
-
+    remove_group.add_argument('-v', '--version', help='Версия платформы для скачивания (пример: 8.3.16.1148)', metavar="8.X.XX.XXXX")
+    remove_group.add_argument('-d', '--no-del',  help='Не удалять распакованные файлы из временной папки', action='store_true', dest="no_del_tmp")
+    remove_group.add_argument('-b', '--bit',     help='Разрядность удаляемой платформы 32/64', type=int, choices=[32, 64], metavar='BIT')
+    remove_group.add_argument('-a', '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
 
     pg = parser.add_argument_group(title='Параметры')
     pg.add_argument('-h', '--help',    help = 'Справка', action='help')
@@ -133,7 +136,7 @@ def ExecuteCommand():
     if namespace.LogLevel!='def':
         SetLogLevel(namespace.LogLevel.upper())
     logger.info("ExecuteCommand() started")
-    #print (namespace)
+    logger.debug(namespace.__dict__)
 
     #общие настройки
     opt=options.Options()
@@ -158,7 +161,7 @@ def ExecuteCommand():
     elif namespace.command == 'install':
         ExecuteInstall(opt, namespace)
     elif namespace.command == 'remove':
-        print("REMOVE")
+        ExecuteRemove(opt, namespace)        
     elif namespace.command == 'clear':
         print("CLEAR")
     else:
@@ -208,8 +211,10 @@ def ExecuteInstall(opt, nn):
         cc=LCache(opt)
         (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
         if cc.NeedDownload(opt.need_version, file_name):
+            #запускаем загрузку только если файл отсутвует в кэше
             ExecuteDownload(opt, nn)
         if cc.NeedDownload(opt.need_version, file_name):
+            #файла по прежнему нет в кэше - загрузка не удалась
             raise Exception("Не удалось выполнить загрузку %s" % platform_link)
         #выполняем инсталляцию
         inst.DoInstall(cc, opt, nn, file_name)
@@ -217,8 +222,32 @@ def ExecuteInstall(opt, nn):
         print("Ошибка при выполнении установки: %s" % e)
         logger.exception("Install error")
     except links.LinksException as e:
-        print("Ошибка указанаия версий, платформ или архитектур для установки: %s" % e)
+        print("Ошибка указания версий, платформ или архитектур для установки: %s" % e)
         logger.exception("Links error")
     except:
         logger.exception("Unexpected error in install command")
+        raise
+
+def ExecuteRemove(opt, nn):
+    """ команда установки платформы """
+    logger.info("executing remove command")
+    try:
+        cc=LCache(opt)
+        (platform_link, file_name)=links.GetLinkEnterprise(opt.need_version, opt.need_what, opt.need_bit, opt.need_arh)
+        if cc.NeedDownload(opt.need_version, file_name):
+            #запускаем загрузку только если файл отсутвует в кэше
+            ExecuteDownload(opt, nn)
+        if cc.NeedDownload(opt.need_version, file_name):
+            #файла по прежнему нет в кэше - загрузка не удалась
+            raise Exception("Не удалось выполнить загрузку %s" % platform_link)
+        #выполняем инсталляцию
+        inst.DoRemove(cc, opt, nn, file_name)
+    except inst.InstallException as e:
+        print("Ошибка при выполнении удаления платформы: %s" % e)
+        logger.exception("Remove error")
+    except links.LinksException as e:
+        print("Ошибка указания версий, платформ или архитектур для удаления: %s" % e)
+        logger.exception("Links error")
+    except:
+        logger.exception("Unexpected error in remove command")
         raise
