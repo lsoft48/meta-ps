@@ -34,18 +34,47 @@ class Options():
         self.no_load_show = False
 
         #текущая ОС
-        self.__is_lin=False
-        self.__is_win=False
-        self.__is_mac=False
-        if sys.platform.startswith('linux'):
+        self.__is_lin = False
+        self.__is_win = False
+        self.__is_mac = False
+        self.__is_xp  = False
+        import platform
+        if inf.platform_linux:
             # linux
             self.__is_lin=True
-        elif platform == "darwin":
+        elif inf.platform == "darwin":
             # OS X
             self.__is_mac=True
-        elif platform == "win32" or platform == "cygwin":
+        elif inf.platform == "win32" or inf.platform == "cygwin":
             # Windows
             self.__is_win=True
+            self.__is_xp=(platform.release() == "XP")
+
+        #настройки установки инсталляторами
+        self.__inst_DESIGNERALLCLIENTS=1 
+        self.__inst_THICKCLIENT=1 
+        self.__inst_THINCLIENTFILE=1 
+        self.__inst_THINCLIENT=1 
+        self.__inst_WEBSERVEREXT=1 
+        self.__inst_SERVER=0 
+        self.__inst_CONFREPOSSERVER=0 
+        self.__inst_CONVERTER77=0 
+        self.__inst_SERVERCLIENT=0 
+        self.__inst_LANGUAGES="RU"
+        #по умолчанию установка инсталятором не предпологаетвмешательства пользователя
+        #но можно отключить и тогда пользователь сможет выбрать что и куда
+        self.inst_user_select=False
+        #демонстрация интерфейса пользователя при инсталяции:
+        # 0 - не показывать
+        # 1 - прогресс
+        # 2 - полный интерфейс
+        self.inst_ui_show=0
+        #предварительно выполнить деинсталяцию
+        self.inst_unintall=False
+        #выполнять запуск скрипта установки - можно оставить только формирование его
+        self.inst_exec=True
+        #выполнить установку vc redist - можно пропустить установку
+        self.inst_vcredist=True
 
         #разрядность ОС
         self.__is_64=False
@@ -63,6 +92,26 @@ class Options():
 
     def __repr__(self):
         return "<Options "+pprint.pformat(vars(self))+" >"
+
+    def getWinInstallOptions(self):
+        """ строка настроек установки для инсталлятора Windows"""
+        return "DESIGNERALLCLIENTS=%s THICKCLIENT=%s THINCLIENTFILE=%s THINCLIENT=%s WEBSERVEREXT=%s SERVER=%s CONFREPOSSERVER=%s CONVERTER77=%s SERVERCLIENT=%s LANGUAGES=%s" % (
+                  self.__inst_DESIGNERALLCLIENTS,
+                  self.__inst_THICKCLIENT,
+                  self.__inst_THINCLIENTFILE,
+                  self.__inst_THINCLIENT,
+                  self.__inst_WEBSERVEREXT,
+                  self.__inst_SERVER,
+                  self.__inst_CONFREPOSSERVER,
+                  self.__inst_CONVERTER77,
+                  self.__inst_SERVERCLIENT,
+                  self.__inst_LANGUAGES,
+                 )
+
+
+    def getIsXP(self):
+        """ Возвращает true если запущено под XP"""
+        return self.__is_xp
 
     def load_file(self, fh):
         """ часть настроек может быть указана в отдельном файле - прочитаем его
@@ -105,13 +154,13 @@ class Options():
         if ns.LogLevel != 'def':
             self.log_level=str(ns.LogLevel).upper()
 
-        if ns.command=='install':
+        if ns.command in ['install', 'remove']:
             self.no_del_tmp = ns.no_del_tmp
         if ns.command=='download':
             self.no_load_show = ns.show
 
         #если команда требует параметров платформы 1С
-        if ns.command in ['download', 'install']:
+        if ns.command in ['download', 'install', 'remove']:
             # - версия
             if ns.version == 'last':
                 raise Exception("Автозаполнение последней версии не реализовано")
@@ -119,6 +168,7 @@ class Options():
                 if ns.version.find('?') != -1 or ns.version.find('*') != -1:
                     raise Exception("Шаблоны версий не реализованы")
                 else:
+                    logger.debug("ns.version=%s" % ns.version)
                     self.need_version=ns.version.strip()
             else:
                 raise Exception("Требуется обязательное указание версии платформы 1С")
@@ -144,8 +194,9 @@ class Options():
                 else:
                     raise Exception("Не удалось определить архитектуру требуемой платформы")
             #what
-            if ns.what!=None:
-                self.need_what=inf.What.GetFromUser(ns.what)
+            what=getattr(ns, "what", None)
+            if what!=None:
+                self.need_what=inf.What.GetFromUser(what)
             else:
                 self.need_what=inf.What.Full
 
