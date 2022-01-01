@@ -6,8 +6,11 @@ import metaps1
 
 
 reqs=['requests','patool', 'sh']
-#if sys.platform.startswith("linux"):
+if sys.platform.startswith("linux"):
+    pass
 #    reqs.append('python-apt')
+else:
+     reqs.append('wmi')
 
 
 setup(
