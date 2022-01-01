@@ -10,18 +10,25 @@ import logging
 logger = logging.getLogger(__name__)
 
 class LCache:
+    class ExtractError(Exception):
+        pass
+
+    class CacheUseError(Exception):
+        pass
+
     def __init__(self, opt):
         logger.info("LCache.__init__()")
         self.__options=opt
         self.__downloads={}
         self.__installs={}
+        self.__removes={}
         self.__base=Path(opt.cache)
         if not self.__base.exists():
             #создаем папку
             logger.debug("creating base dir %s " % self.__base)
             self.__base.mkdir(parents=True, exist_ok=True)
         elif self.__base.is_file():
-            raise Exception("Невозможно использовать локальный кэш файлов - указанный путь %s является файлом, а не папкой" % self.__base)
+            raise self.CacheUseError("Невозможно использовать локальный кэш файлов - указанный путь %s является файлом, а не папкой" % self.__base)
         #все нормально - папка существует
 
     def GetVersionPath(self, version):
@@ -99,23 +106,8 @@ class LCache:
         tt=tempfile.TemporaryDirectory()
         self.__installs[tt.name]=(version, file_name, tt)
         ff=self.GetVersionPath(version) / file_name
-        if not ff.is_file():
-            raise Exception("Файл платформы %s не существует или не является файлом" % str(ff))
-        #в зависимости от вида архива выполняем распаковку
-        extracted=True
-        logger.debug("trying to unpack %s arhive to %s" % (ff, tt.name))
-        if file_name.endswith(".zip"):
-            #zip архив
-            patoolib.extract_archive(str(ff) , outdir=tt.name)
-        elif file_name.endswith(".rar"):
-            #rar архив
-            patoolib.extract_archive(str(ff) , outdir=tt.name)
-        elif file_name.endswith(".tar.gz"):
-            #rtar+gzip архив
-            patoolib.extract_archive(str(ff) , outdir=tt.name)
-        else:
-            #файл не требует распаковки - возможно это установщик Linux
-            extracted=False
+        #распакуем архив
+        extracted=self.__extract(ff, tt)
         return (extracted, tt.name)
 
     def FinishInstall(self, tmp_dir):
@@ -134,4 +126,50 @@ class LCache:
                 #вызов cleanup функции для объекта tt (TemporaryDirectory)
                 tt._finalizer.detach()
 
+    def StartRemove(self, version, file_name):
+        """ Вызывается при начале удаления - выполняет распаковку платформы во временную папку """
+        logger.info("StartRemove()")
+        tt=tempfile.TemporaryDirectory()
+        self.__removes[tt.name]=(version, file_name, tt)
+        ff=self.GetVersionPath(version) / file_name
+        #распакуем архив
+        extracted=self.__extract(ff, tt)
+        return (extracted, tt.name)
 
+    def FinishRemove(self, tmp_dir):
+        """ Вызывается при завершении удаления - удаляет временную папку с платформой """
+        logger.info("FinishRemove()")
+        logger.debug("tmp_dir=%s" % tmp_dir)
+        (version, file_name, tt)=self.__removes[tmp_dir]
+        try:
+            if not self.__options.no_del_tmp:
+                logger.debug("cleanup %s" % tt.name)
+                tt.cleanup()
+        finally:
+            if Path(tt.name).is_dir() and (self.__options.no_del_tmp):
+                logger.debug("stop removing %s" % tt.name)
+                #помечаем финализатор временного объекта как "мертвый", что предотвращает
+                #вызов cleanup функции для объекта tt (TemporaryDirectory)
+                tt._finalizer.detach()
+
+    def __extract(self, ff, tt):
+        """ Распаковка архива в папку """
+        if not ff.is_file():
+            raise self.ExtractError("Файл архива %s не существует или не является файлом" % str(ff))
+        extracted=True
+        logger.debug("trying to unpack %s arhive to %s" % (ff, tt.name))
+        sff=str(ff)
+        fin=sff[-8:]
+        if fin.endswith(".zip"):
+            #zip архив
+            patoolib.extract_archive(sff , outdir=tt.name)
+        elif fin.endswith(".rar"):
+            #rar архив
+            patoolib.extract_archive(sff , outdir=tt.name)
+        elif fin.endswith(".tar.gz"):
+            #tar+gzip архив
+            patoolib.extract_archive(sff , outdir=tt.name)
+        else:
+            #файл не требует распаковки - возможно это установщик Linux
+            extracted=False
+        return extracted
