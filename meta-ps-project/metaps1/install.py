@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sh
 import re
 import pprint
 from pathlib import Path
@@ -9,6 +8,12 @@ import metaps1.info as inf
 import logging
 logger = logging.getLogger(__name__)
 #alogger = logging.getLogger("apt")
+
+#if inf.platform_linux:
+#  import sh
+#else:
+#  #windows
+#  pass
 
 class InstallException(Exception):
     pass
@@ -22,9 +27,12 @@ def DoInstall(cc, opt, nn, file_name):
     logger.debug("file_name=%s" % file_name)
     if not opt.need_what in inf.list_4install:
         raise InstallException("Элемент платформы %s не требует установки" % opt.need_what)
+    #в зависимости от целевой архитектуры создадим инсталлятор
     if opt.need_arh==inf.Platform.LinuxDEB:
+        from metaps1.install_linux import InstallerLinuxDeb
         installer=InstallerLinuxDeb(opt, file_name)
     elif opt.need_arh==inf.Platform.Win:
+        from metaps1.install_win import InstallerWindows
         installer=InstallerWindows(opt, file_name)
     else:
         raise InstallException("Установка для платформы %s не реализована" % opt.need_arh)
@@ -36,141 +44,67 @@ def DoInstall(cc, opt, nn, file_name):
         #удалим распакованные данные платформы
         pass
 
+def DoRemove(cc, opt, nn, file_name):
+    """ Удаление платформы """
+    logger.info("DoRemove()")
+    logger.debug("file_name=%s" % file_name)
+    if not opt.need_what in inf.list_4install:
+        raise InstallException("Элемент платформы %s не требует удаления" % opt.need_what)
+    #в зависимости от целевой архитектуры создадим инсталлятор
+    if opt.need_arh==inf.Platform.LinuxDEB:
+        from metaps1.install_linux import InstallerLinuxDeb
+        installer=InstallerLinuxDeb(opt, file_name)
+    elif opt.need_arh==inf.Platform.Win:
+        from metaps1.install_win import InstallerWindows
+        installer=InstallerWindows(opt, file_name)
+    else:
+        raise InstallException("Удаление для платформы %s не реализована" % opt.need_arh)
+    try:
+        #получим временную папку и распакуем в нее архив
+        #выполним установку
+        installer.Remove(cc)
+    finally:
+        #удалим распакованные данные платформы
+        pass
+
 class InstallerBase():
+    """ Базовый класс инсталлятора - от него создаются установщики
+    для linux deb/rpm и для windows native/wine
+    """
     def __init__(self, opt, file_name):
-        self.__opt=opt
-        self.__file_name=file_name
+        logger.info("InstallerBase::__init__()")
+        self._opt=opt
+        self._file_name=file_name
         self.def_enc=getpreferredencoding() or "UTF-8"
+        logger.debug("file_name=%s" % self._file_name)
+        logger.debug("def_encoding=%s" % self.def_enc)
 
     def _install(self, ext, tmp_dir):
         logger.info("InstallerBase::_install()")
-        raise Exception("Base installer call")
+        raise Exception("Base installer _install")
+
+    def _remove(self, ext, tmp_dir):
+        logger.info("InstallerBase::_remove()")
+        raise Exception("Base installer _remove")
 
     def __call__(self, cc):
         """ установка из архива  """
         logger.info("Installerbase::__call__()s")
-        (ext, tmp_dir)=cc.StartInstall(self.__opt.need_version, self.__file_name)
+        (ext, tmp_dir)=cc.StartInstall(self._opt.need_version, self._file_name)
         try:
             self._install(ext, tmp_dir)
         finally:
             cc.FinishInstall(tmp_dir)
 
-
-class InstallerWindows(InstallerBase):
-    def _install(self, ext, tmp_dir):
-        """ установка из архива на виндоус или на линукс в wine """
-        logger.info("InstallerWindows::_install")
-
-class InstallerLinuxDeb(InstallerBase):
-    class DebInf:
-        def __init__(self, name):
-            self.name = name
-            self.is_nls = "-nls_" in name.name
-            self.installed=False
-
-    def __init__(self, opt, file_name):
-        logger.info("InstallerLinuxDeb::__init__()")
-        super().__init__(opt, file_name)
-        self.alogger = logging.getLogger("apt")
-        self.alogger.setLevel(opt.log_level)
-        handler=logging.FileHandler("/var/log/meta-ps-apt.log", mode='w')
-        handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        self.alogger.addHandler(handler)
-        self.alogger.propagate=False
-
-    def _log_sh_res(self, e):
-        logger.info("InstallerLinuxDeb::_log_sh_res()")
-        self.alogger.error("CMD[%s]: %s" % (e.exit_code, e.full_cmd))
-        self.alogger.debug("OUT: %s", e.stdout.decode(self.def_enc, "replace"))
-        self.alogger.error("ERR: %s", e.stderr.decode(self.def_enc, "replace"))
-
-    def _apt_update(self):
-        """ запуск команды apt update для обновления списков пакетов из репозиториев """
-        logger.info("InstallerLinuxDeb::_apt_update()")
+    def Remove(self, cc):
+        """ Удаление платформы """
+        logger.info("Installerbase::Remove()")
+        (ext, tmp_dir)=cc.StartRemove(self._opt.need_version, self._file_name)
         try:
-            sh.apt("update", _ok_code=[])
-        except sh.ErrorReturnCode_0 as e:
-            self._log_sh_res(e)
-        except sh.ErrorReturnCode as e:
-            logger.error("error updating packet cache (%s)", e)
-            self._log_sh_res(e)
+            self._remove(ext, tmp_dir)
+        finally:
+            cc.FinishRemove(tmp_dir)
 
-    def _apt_install_dep(self):
-        """ Запуск команды apt install -f для установки зависимостей """
-        logger.info("InstallerLinuxDeb::_apt_install_dep()")
-        try:
-            sh.apt("install", "-f", "-y", _ok_code=[])
-        except sh.ErrorReturnCode_0 as e:
-            self._log_sh_res(e)
-        except sh.ErrorReturnCode as e:
-            logger.error("error installing dependances (%s)", e)
-            self._log_sh_res(e)
 
-    def _apt_install_debs(self, debs, flt, find_dep=False):
-        """ Установка deb пакетов по списку с фильтром """
-        logger.info("InstallerLinuxDeb::_apt_install_debs()")
-        deps={}
-        for pack in debs:
-            if flt(pack):
-                try:
-                    sh.dpkg("-i", pack.name, _ok_code=[])
-                    pack.installed=True
-                except sh.ErrorReturnCode_0 as e:
-                    pack.installed=True
-                    self._log_sh_res(e)
-                except sh.ErrorReturnCode as e:
-                    if not find_dep:
-                        logger.error("error installing %s (%s)", pack.name, e)
-                    else:
-                        dep_list=self._find_dep_list(pack, e.stderr.decode(self.def_enc, "replace"))
-                        deps[str(pack.name)]=dep_list
-                        pprint.pprint(dep_list)
-                        raise InstallException("Need install dependances by hand")
-                    self._log_sh_res(e)
-        return deps
-
-    def _find_dep_list(self, pack, log):
-        """ Выделение из лога списка пакетов, от которых зависит данный """
-        logger.info("InstallerLinuxDeb::_find_dep_list(%s)" % pack.name)
-        lst=re.findall(" ([^ ]+) depends on ([^ ]+) ", log)
-        res=[]
-        for fnd in lst:
-            logger.debug("%s depends on %s" % fnd)
-            if fnd[0]==pack.name:
-                res.append(fnd[1])
-        return res
-
-    def _install(self, ext, tmp_dir):
-        """ установка из deb пакетов на линуксе """
-        logger.info("InstallerLinuxDeb::_install()")
-        frm=Path(tmp_dir)
-        debs=[]
-        for pack in frm.glob("*.deb"):
-            debs.append(self.DebInf(pack))
-
-        #выполняем обновление локального списка пакетов
-        self._apt_update()
-
-        #libwebkitgtk-3.0-0
-        #сначала ставим обычные пакеты
-        self._apt_install_debs(debs, lambda pack: (not pack.is_nls))
-
-        #добавляем зависимости
-        self._apt_install_dep()
-
-        #устанавливаем неустановленные
-        self._apt_install_debs(debs, lambda pack: (not pack.is_nls and not pack.installed), True)
-
-        #теперь языковые
-        self._apt_install_debs(debs, lambda pack: (pack.is_nls and not pack.installed))
-
-        pprint.pprint(debs)
-
-        res=[]
-        for pack in debs:
-            if not pack.installed:
-                res.append(str(pack.name))
-        if len(res)>0:
-            raise InstallException("Error installing packages: %s" % ", ".join(res))
 
 
