@@ -17,7 +17,7 @@ def ExecuteDownload(opt, nn):
         if opt.no_load_show:
             print("Найденные ссылка на платформу:")
             print("  %s" % platform_link)
-        sess=site.Auth(opt.username, opt.password)
+        sess=site.AuthBase.Auth(opt.username, opt.password)
         down_links=links.GetDownloadLinks(sess, platform_link)
         if len(down_links)==0:
             print("На странице загрузки отсутствуют ссылки для скачивания файла")
@@ -32,7 +32,7 @@ def ExecuteDownload(opt, nn):
             tmp_file=cc.StartDownload(opt.need_version, file_name)
             site.DownloadFile(sess, down_links[0], tmp_file)
             cc.FinishDownload(tmp_file)
-    except site.Auth1CException as e:
+    except site.AuthBase.Error as e:
         print("Ошибка авторизации/доступа на сервер (%s)" % e)
         logger.exception("Auth error: %s" % e)
     except links.LinksException as e:
