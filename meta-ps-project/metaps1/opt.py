@@ -59,7 +59,7 @@ class Options():
         self.__inst_SERVER=0 
         self.__inst_CONFREPOSSERVER=0 
         self.__inst_CONVERTER77=0 
-        self.__inst_SERVERCLIENT=0 
+        self.__inst_SERVERCLIENT=1 
         self.__inst_LANGUAGES="RU"
         #по умолчанию установка инсталятором не предпологаетвмешательства пользователя
         #но можно отключить и тогда пользователь сможет выбрать что и куда
