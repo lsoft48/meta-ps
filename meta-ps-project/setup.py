@@ -12,6 +12,10 @@ if sys.platform.startswith("linux"):
 else:
      reqs.append('wmi')
 
+e_reqs={
+    'testing': ['pytest']
+}
+
 
 setup(
     name='metaps1',
@@ -21,6 +25,7 @@ setup(
     description='1C Enterprise installer',
     long_description=open(join(dirname(__file__), 'README.txt')).read(),
     install_requires=reqs,
+    extras_require=e_reqs,
     entry_points={
         'console_scripts':
             ['meta-ps = metaps1.main:ExecuteCommand']

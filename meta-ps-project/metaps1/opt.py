@@ -2,7 +2,6 @@
 import sys
 import os
 import pprint
-import argparse
 import metaps1.info as inf
 
 import logging
@@ -205,6 +204,7 @@ class Options():
         (заполняем только незаполненные)"""
         logger.info("loading env var params")
         pass
+
     def fill_defaults(self):
         """ Заполнение значениями по умолчанию незаполненных параметров """
         logger.info("filling params default values")

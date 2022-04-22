@@ -22,7 +22,7 @@ def std_conv(txt):
 
 class InstallerBase():
     """ Базовый класс инсталлятора - от него создаются установщики
-    для linux deb/rpm и для windows native/wine
+    для linux deb/rpm/bin и для windows native/wine
     """
     class InstallException(Exception):
         pass

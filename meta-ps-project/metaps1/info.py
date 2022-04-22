@@ -2,7 +2,7 @@
 import sys
 from enum import Enum
 
-version='0.6.0'
+version='0.6.1'
 
 platform=sys.platform
 platform_linux=platform.startswith('linux')
@@ -87,6 +87,30 @@ list_4install=[What.Thin,
                What.Full, 
                What.Client, 
                What.Server]
+
+class WhatInst(Enum):
+    """ Варианты что именно устанавливаем """
+    #тонкий клиент обычный
+    Thin        = 1
+    #тонкий клиент фаловый
+    ThinFile    = 2
+    #толстый клиент
+    Thick       = 4
+    #сервер
+    Server      = 8
+    #сервер администрирования
+    ServerAdmin = 16
+    #расширение веб-сервера
+    WS          = 32
+    #хранилище
+    Storage     = 64
+    #админка
+    Admin       = 128
+    #проверка целостности
+    Integrity   = 256
+    #JRE
+    JRE         = 512
+
 
 class AWhat(Enum):
     """ Дополнительные варинты загрузки """

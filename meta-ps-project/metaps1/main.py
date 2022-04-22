@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 __arh=['linux', 'linux_deb', 'linux_rpm', 'win', 'mac']
 __what=['thin', 'full', 'client', 'server', 'ext', 'demo', 'demo_dt', 'or_sort', 'doc', 'err_os_db']
+__what_inst=['client_full','client_thin','client_thin_fib','server','ws','server_admin','config_storage_server','addiditional_admin_function','liberica_jre','integrity_monitoring']
 __arh_help="""
 - win - Microsoft Windows 32/64 разрядная
 - linux - система Linux, без уточнения используемой системы пакетов, следует использовать для версий платформы начиная с 8.3.20
@@ -34,6 +35,19 @@ __what_help="""
 - doc - инструкция по установке и обновлению
 - err_os_db - ошибки проблемы при работе с БД"""
 
+__what_inst_help="""
+- client_full - толстый клиент
+- client_thin - тонкий клиент
+- client_thin_fib - тонкий клиент
+- server - сервер 1С предприятия
+- ws - модули веб-сервера
+- server_admin - сервер администрирования
+- config_storage_server - сервер храненяи конфигураций
+- addiditional_admin_function - дополнительные функции администрирования
+- liberica_jre - jre установщика linux
+- integrity_monitoring - проверка целостности
+"""
+
 def create_parser():
     parser = argparse.ArgumentParser(add_help = False,
                                      formatter_class=argparse.RawTextHelpFormatter,
@@ -46,7 +60,7 @@ def create_parser():
                                         title = 'Доступные команды',
                                         description = 'Одна из перечисленных команд, должна быть указана в командной строке %(prog)s'
     )
-
+    #---------------------------------------------------- DOWNLOAD --------------------------------------------------------------------------------------------
     down_parser   = cmd_parsers.add_parser('download',
                                            formatter_class=argparse.RawTextHelpFormatter,
                                            add_help = False,
@@ -56,14 +70,15 @@ def create_parser():
     down_group = down_parser.add_argument_group(title='Параметры')
     down_group.add_argument('-h', '--help', action='help', help='Справка')
     #варианты last|неполная версия 8.3.11 - загружаем последнюю платформу 11-го релиза
-    down_group.add_argument('-v', '--version', help='Версия платформы для скачивания (пример: 8.3.16.1148)', metavar="8.X.XX.XXXX")
-    down_group.add_argument('-b', '--bit',     help='Разрядность скачиваемых файлов 32/64', type=int, choices=[32, 64], metavar='BIT')
-    down_group.add_argument('-a', '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
-    down_group.add_argument('-w', '--what',    help='Что именно скачиваем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
-    down_group.add_argument('-o', '--out',     help='Размещение загруженного файла по указанному пути/в указанном файле', metavar='out-file or out-path')
-    down_group.add_argument('-f', '--force',   help='Скачивать принудительно, даже если файл уже имеется', action='store_true')
-    down_group.add_argument('-s', '--show',    help='Не скачивать - только показать ссылку(и) для скачивания', action='store_true')
+    down_group.add_argument('-v',  '--version', help='Версия платформы для скачивания (пример: 8.3.16.1148)', metavar="8.X.XX.XXXX")
+    down_group.add_argument('-b',  '--bit',     help='Разрядность скачиваемых файлов 32/64', type=int, choices=[32, 64], metavar='BIT')
+    down_group.add_argument('-a',  '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
+    down_group.add_argument('-wd', '--what-dl', help='Что именно скачиваем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
+    down_group.add_argument('-o',  '--out',     help='Размещение загруженного файла по указанному пути/в указанном файле', metavar='out-file or out-path')
+    down_group.add_argument('-f',  '--force',   help='Скачивать принудительно, даже если файл уже имеется', action='store_true')
+    down_group.add_argument('-s',  '--show',    help='Не скачивать - только показать ссылку(и) для скачивания', action='store_true')
 
+    #---------------------------------------------------- INSTALL ---------------------------------------------------------------------------------------------
     inst_parser   = cmd_parsers.add_parser('install',
                                            formatter_class=argparse.RawTextHelpFormatter,
                                            add_help = False,
@@ -71,14 +86,15 @@ def create_parser():
                                            description = "Установка компонентов платформы (с загрузкой при необходимости с портала 1С)"
     )
     inst_group = inst_parser.add_argument_group(title='Параметры')
-    inst_group.add_argument('-h', '--help', action='help', help='Справка')
-    inst_group.add_argument('-v', '--version', help='Версия платформы для установки (пример: 8.3.16.1148)')
-    inst_group.add_argument('-b', '--bit',     help='Разрядность устанавливаемых файлов 32/64', type=int, choices=[32, 64], metavar='BIT')
-    inst_group.add_argument('-a', '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
-    inst_group.add_argument('-w', '--what',    help='Что именно устанавливаем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
-    inst_group.add_argument('-n', '--no-load', help='Не обращаться к порталу 1С, установка только с диска', action='store_true', dest="no_load")
-    inst_group.add_argument('-i', '--in',      help='Установка из указанной папки/файла', metavar='in-file or in-path')
-    inst_group.add_argument('-d', '--no-del',  help='Не удалять распакованные файлы из временной папки', action='store_true', dest="no_del_tmp")
+    inst_group.add_argument('-h',  '--help', action='help', help='Справка')
+    inst_group.add_argument('-v',  '--version', help='Версия платформы для установки (пример: 8.3.16.1148)')
+    inst_group.add_argument('-b',  '--bit',     help='Разрядность устанавливаемых файлов 32/64', type=int, choices=[32, 64], metavar='BIT')
+    inst_group.add_argument('-a',  '--arh',     help="ОС/Архитектура: %s" % __arh_help, type=str, choices=__arh, metavar='ARCH')
+    inst_group.add_argument('-wd', '--what-dl', help='Что именно скачиваем: %s' % __what_help, type=str, choices=__what, metavar='WHAT')
+    inst_group.add_argument('-n',  '--no-load', help='Не обращаться к порталу 1С, установка только с диска', action='store_true', dest="no_load")
+    inst_group.add_argument('-i',  '--in',      help='Установка из указанной папки/файла', metavar='in-file or in-path')
+    inst_group.add_argument('-d',  '--no-del',  help='Не удалять распакованные файлы из временной папки', action='store_true', dest="no_del_tmp")
+    inst_group.add_argument('-wi', '--what-in', help='Что устанавливаем: %s' % __what_inst_help, type=str, choices=__what_inst, metavar='WHAT_INST')
     inst_group.add_argument('--inst-ui', help='Интерфейс инсталлятора', type=str, choices=['no', 'progress', 'full'], metavar='INST_UI')
 
     list_parser   = cmd_parsers.add_parser('list', 
@@ -91,6 +107,30 @@ def create_parser():
     )
     list_group = list_parser.add_argument_group(title='Параметры')
     list_group.add_argument('-h', '--help', action='help', help='Справка')
+
+    list_subparsers = list_parser.add_subparsers(dest='list_command',
+                                        title = 'Доступные варианты',
+                                        description = 'Один из перечисленных вариантов, должен быть указан в командной строке после list %(prog)s'
+    )
+    list_sp_last = list_subparsers.add_parser("last",
+                                              add_help=False,
+                                              formatter_class=argparse.RawTextHelpFormatter,
+                                              help = 'Получение версии последней (самой новой) платформы'
+    )
+    list_sp_avail = list_subparsers.add_parser("available",
+                                              aliases=['avail','a'],
+                                              add_help=False,
+                                              formatter_class=argparse.RawTextHelpFormatter,
+                                              help = 'Получение списка версий платформы, доступных для получения с сайта'
+    )
+    list_sp_inst  = list_subparsers.add_parser("installed",
+                                              aliases=['inst','i'],
+                                              add_help=False,
+                                              formatter_class=argparse.RawTextHelpFormatter,
+                                              help = 'Получение списка установленных версий платформы'
+    )
+    
+
     list_group.add_argument('-v', '--version', help='Фильтр версий платформ (пример: 8.3)')
     list_group.add_argument('-с', '--count',   help='Выводить последние COUNT версий')
 
@@ -154,7 +194,14 @@ def ExecuteCommand():
 
     #выполняем команду
     if namespace.command == 'list':
-        print("LIST")
+        if namespace.list_command=='last':
+            pass
+        elif namespace.list_command=='installed':
+            pass
+        elif namespace.list_command=='available':
+            pass
+        else:
+            parser.print_help()
     elif namespace.command == 'download':
         #print("DOWNLOAD")
         from metaps1.cmd_download import ExecuteDownload
