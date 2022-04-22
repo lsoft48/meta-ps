@@ -3,6 +3,7 @@ import sys
 import metaps1.links_ent as links
 #import metaps1.site_1c as site
 from metaps1.cache import LCache
+from metaps1.install import InstallerBase
 
 import logging
 logger = logging.getLogger(__name__)
