@@ -3,6 +3,23 @@
 
 # Setuptools distribution folder.
 /dist/
+/meta-ps-project/dist/
 
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
+/*/*.egg-info
+
+#python virtual env
+/env/
+
+#log files
+*.log
+
+#login/pass
+/meta-ps-project/opt.txt
+
+#builds single file
+/meta-ps-project/build/
+
+#fiddler debug
+/meta-ps-project/fidler/
