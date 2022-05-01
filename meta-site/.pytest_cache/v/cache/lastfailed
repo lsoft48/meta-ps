@@ -1,0 +1,4 @@
+{
+  "metasites1/tests/test_connection.py::Test_ConnectionNet::()::test_LoginHTTPS": true,
+  "metasites1/tests/test_sites.py::Test_Sites::()::test_set_lang": true
+}
