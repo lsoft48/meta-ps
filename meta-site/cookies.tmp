@@ -1,6 +1,0 @@
-#LWP-Cookies-2.0
-Set-Cookie3: client_language=ru_UA; path="/"; domain=".1c.eu"; path_spec; domain_dot; expires="2022-04-30 08:38:05Z"; version=0
-Set-Cookie3: SESSION="5f980952-3691-4fa8-aa27-3973e60d048d"; path="/"; domain="login.1c.ru"; path_spec; secure; discard; HttpOnly=None; version=0
-Set-Cookie3: TGC="eyJhbGciOiJIUzUxMiJ9.WlhsS05tRllRV2xQYVVwRlVsVlphVXhEU21oaVIyTnBUMmxLYTJGWVNXbE1RMHBzWW0xTmFVOXBTa0pOVkVrMFVUQktSRXhWYUZSTmFsVXlTVzR3TGk1SkxVNVRZVUZzTm0xS2FEVnhValV6WlhkZllYWjNMa3h5UkZZMVQxVnVObVp3ZEY5aWIzTlliMFJ1TVdsSWNFTktSMGc0WVRaWGFISlZSMDlTU2xKbk5EWlBNbVpRUlRJellVbHpUMDVzU0dkSGVqRlZMWGQyV21ReFdXcEhkVE4zTFZwdFpGcG5VamxITlRSWlIzZHlXWGw2U21SRlRqSmtUSFl5YUUxUk0zTlVUMjFoVjBaS1J6WTJTRmxCVDFSblNFcHZVbTB3VFRRNGVEVnlSRGxOVTAxbGVEQktPVVV4TlhVMk5rcDRaVEJ2TjB4RldscElXblIxTjJWemFtTnRVUzVKVTNOWVRYUjVUVEJxZFZORlEwMUxYM0pRVUc1Ug.AL2GG7oakAuFRMNwAunVYuWOrWQKp0vhkG06_IMuftRbdOaaVaMrifi-0KaDtR-_eEpf81RvU8aD5-7UNrbbWA"; path="/"; domain="login.1c.ru"; path_spec; secure; discard; HttpOnly=None; version=0
-Set-Cookie3: SESSION="a7129cad-c4b4-4e52-9623-180ff9680062"; path="/"; domain="releases.1c.eu"; path_spec; secure; discard; HttpOnly=None; version=0
-Set-Cookie3: userSettings="\"{}\""; path="/"; domain="releases.1c.eu"; path_spec; discard; version=0
